@@ -1,0 +1,57 @@
+ID CRM WING
+SOL 1
+$ALTER for stiffness matrix decomposition input
+$ALTER 82 82
+$INPUTT2,/LLL,,,,/C,N,-1/C,N,11
+$ENDALTER
+CEND
+MAXLINES=999999999
+TITLE=crm_reference_mda
+SPC = 1
+$MPC = 1493985
+DISP(PUNCH) = ALL
+STRESS(PUNCH) = ALL
+SUBCASE 1
+LOAD = 203
+BEGIN BULK
+PARAM,AUTOSPC,1
+PARAM,GRDPNT,0
+
+PROD,13,1,{a1}
+PROD,14,1,{a2}
+PROD,15,1,{a3}
+PROD,16,1,{a4}
+PROD,17,1,{a5}
+PROD,18,1,{a6}
+
+PBAR,30,2,{s1},{Ix1},{Iy1}
+PBAR,31,2,{s2},{Ix2},{Iy2}
+PBAR,32,2,{s3},{Ix3},{Iy3}
+PBAR,33,2,{s4},{Ix4},{Iy4}
+PBAR,34,2,{s5},{Ix5},{Iy5}
+PBAR,35,2,{s6},{Ix6},{Iy6}
+PBAR,36,2,{s7},{Ix7},{Iy7}
+PBAR,38,2,{s8},{Ix8},{Iy8}
+
+PSHELL,1,1,{t1},1,,1
+PSHELL,2,1,{t2},1,,1
+PSHELL,3,1,{t3},1,,1
+PSHELL,4,1,{t4},1,,1
+PSHELL,5,1,{t5},1,,1
+PSHELL,6,1,{t6},1,,1
+PSHELL,7,1,{t7},1,,1
+PSHELL,8,1,{t8},1,,1
+PSHELL,9,1,{t9},1,,1
+PSHELL,10,1,{t10},1,,1
+PSHELL,11,1,{t11},1,,1
+PSHELL,12,1,{t12},1,,1
+
+$,Referenced,Material,Records
+$,Material,Record,:,mat1.1
+$,Description,of,Material,:
+MAT1,1,6.89E+10,,.31,2795.67
+$,Material,Record,:,mat1.2
+$,Description,of,Material,:
+MAT1,2,6.89E+10,,.31,2795.67
+
+LOAD,203,1.0,1.0,201
