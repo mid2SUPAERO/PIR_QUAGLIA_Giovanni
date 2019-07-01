@@ -1,0 +1,27 @@
+clearvars
+close all
+clc
+
+load FP
+
+V = 3;
+L = 4;
+
+
+%NODES
+[NODES,SECTION] = CreateNodes(FP,V,L);
+
+%%
+%ELEMENTS
+[CQUAD CROD] = ElLong (SECTION,L,V);
+CQUAD = [CQUAD ElSkin(SECTION,L,V)];
+CQUAD = [CQUAD ElRib(SECTION,L,V)];
+CTRIA = ElTria(SECTION,L,V);
+CBAR = ElStr(SECTION,NODES,L,V);
+
+
+%WRITE
+writeInp(NODES,SECTION,L,V,CTRIA,CQUAD,CROD,CBAR)
+%writeBdf(NODES,SECTION,L,V,CTRIA,CQUAD,CROD,CBAR)
+writeBdf(NODES,SECTION,L,V,CBAR,CQUAD,CROD,CTRIA)
+writeGeom(NODES)
