@@ -9,6 +9,8 @@ Aerostructures was modified and the adapted version is present in branch g.quagl
 
 Tutorials:
 
-- Sorting the CRM wing original model:
+- Sorting the CRM wing original model: https://htmlpreview.github.io/?https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Tutorials/MainCreatePlanes.html
+
 - Design of the LF model:
+
 - Static aeroelastic simulation:
