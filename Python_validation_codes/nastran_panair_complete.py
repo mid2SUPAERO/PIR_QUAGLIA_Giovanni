@@ -45,11 +45,8 @@ if __name__ == "__main__":
     # h = 10500.
     alpha_0 = 1.340
     
-    
-    b_0 = 58.7629-10
-    
-    sweep_0 = 37.16-2.5
-    
+    b_0 = 58.7629
+    sweep_0 = 37.16
     
     b_baseline = 58.7629
     c = 7.00532
@@ -174,7 +171,6 @@ if __name__ == "__main__":
     root.add('cruise_load_factor', IndepVarComp('n', n), promotes=['*'])
     root.add('root_leading_edge_x', IndepVarComp('xr', xr), promotes=['*'])
     root.add('wing_twist', IndepVarComp('theta', theta), promotes=['*'])
-        # Independent variables that are optimization design variables
     root.add('root_chord', IndepVarComp('cr', cr_0), promotes=['*'])
     root.add('break_chord', IndepVarComp('cb', cb_0), promotes=['*'])
     root.add('tip_chord', IndepVarComp('ct', ct_0), promotes=['*'])

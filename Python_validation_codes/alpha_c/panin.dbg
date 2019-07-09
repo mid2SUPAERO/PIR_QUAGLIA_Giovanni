@@ -1,0 +1,24 @@
+ Debug output from panin on                
+ Reading auxiliary data from aux_panin.aux
+ Reading wgs file general title:'Wing'
+ Completed reading network:upper_surface
+ Completed reading network:lower_surface
+ Completed reading network:wingtip_surface
+ There are            3  networks.
+ Command 48 CHECK 0
+ Command 13 SYMM 1
+ Command 22 IOUTPR 0
+ Command 23 IFMCPR 1
+ Command 42 PRECISION 6
+ Command  6 CBAR 7.00532
+ Command  7 SPAN 58.7629
+ Command  2 SREF 383.689555
+ Command  1 MACH 0.8478872898453262
+ Mach=  0.847887278    
+ Command  9 ALPC 1.34
+ Command 11 ALPHA 1.34
+ Command 35 BOUN 1 1 1
+ Net            1    kt=           1
+ Net            2    kt=           1
+ Net            3    kt=           1
+ Command 58 WAKE 1 1 587.629
