@@ -11,6 +11,6 @@ Tutorials:
 
 - Sorting the CRM wing original model: https://htmlpreview.github.io/?https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Tutorials/MainCreatePlanes.html
 
-- Design of the LF model:
+- Design of the LF model: https://htmlpreview.github.io/?https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Tutorials/MainCreateMesh.html
 
 - Static aeroelastic simulation:
