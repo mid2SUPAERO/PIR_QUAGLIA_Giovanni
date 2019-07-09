@@ -13,4 +13,4 @@ Tutorials:
 
 - Design of the LF model: https://htmlpreview.github.io/?https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Tutorials/MainCreateMesh.html
 
-- Static aeroelastic simulation:
+- Static aeroelastic simulation: https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Python_validation_codes/nastran_panair_complete.ipynb
