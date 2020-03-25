@@ -72,15 +72,15 @@ set(groot, 'defaultAxesFontWeight','bold');
 set(groot, 'defaultLegendLocation','northwest');
 
 
-figure()
-scatter3(c(:,1),c(:,2),c(:,3),'o','filled','MarkerFaceColor',[0 0.4470 0.7410])
-hold on
-scatter3(newNodes(:,1),newNodes(:,2),newNodes(:,3),80,'d','filled','MarkerFaceColor',[0.9290 0.6940 0.1250])
-grid on
-legend('HF nodes','LF nodes')
-xlabel('X [m]','Interpreter','latex')
-ylabel('Y [m]','Interpreter','latex')
-zlabel('Z [m]','Interpreter','latex')
+% figure()
+% scatter3(c(:,1),c(:,2),c(:,3),'o','filled','MarkerFaceColor',[0 0.4470 0.7410])
+% hold on
+% scatter3(newNodes(:,1),newNodes(:,2),newNodes(:,3),80,'d','filled','MarkerFaceColor',[0.9290 0.6940 0.1250])
+% grid on
+% legend('HF nodes','LF nodes')
+% xlabel('X [m]','Interpreter','latex')
+% ylabel('Y [m]','Interpreter','latex')
+% zlabel('Z [m]','Interpreter','latex')
 
 
 end
