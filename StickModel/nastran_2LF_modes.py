@@ -11,7 +11,7 @@ import numpy as np
 
 from openmdao.api import Problem, Group, IndepVarComp, ScipyGMRES, ExecComp
 
-from aerostructures import NastranDynamicStickModel, Interpolation, DynamicStructureProblemDimensions, DynamicStructureProblemPureParams, PlanformGeometry, AeroProblemDimensions, AeroProblemParams, StructureMesher, PanairMesher, WBGeometry, WBPhisicalProperties, GeometricalProperties
+from aerostructures import NastranDynamicStickModel, Interpolation, DynamicStructureProblemDimensions, DynamicStructureProblemPureParams, PlanformGeometry, AeroProblemDimensions, AeroProblemParams, StructureMesher, PanairMesher, WBGeometry, WBPhisicalProperties, WBPhisicalPropertiesAnalytical, WBGeometryAnalytical, GeometricalProperties
 
 if __name__ == "__main__":
     
@@ -200,9 +200,12 @@ if __name__ == "__main__":
     #Interpolation Components
     root.add('interp_struct_morph', Interpolation(ns_all, na_unique, function = function_type, bias = bias_morph))
     
-    #Disciplines used to compute the stick model properties
+    #Disciplines used to compute the stick model properties using unitary loads
     root.add('wing_box_geometry', WBGeometry(node_id, node_id_all, rn, wbn, tn, sn, an), promotes=['*'])
     root.add('wing_box_phisical_properties', WBPhisicalProperties(tn, mn, sn, an, wbn), promotes=['*'])
+    #Disciplines used to compute the stick model properties using analytical computation
+    #root.add('wing_box_geometry', WBGeometryAnalytical(node_id, node_id_all, rn, wbn, tn, sn, an), promotes=['*'])
+    #root.add('wing_box_phisical_properties', WBPhisicalPropertiesAnalytical(tn, mn, sn, an, wbn), promotes=['*'])
     
     #Add disciplines to the group
     root.add('planform_geometry', PlanformGeometry(n_sec, b_sec), promotes=['*'])
