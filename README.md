@@ -17,7 +17,9 @@ Tutorials:
 
 - Modal comparison
 first run the HF extraction https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Python_validation_code_dynamic/nastran_HF_modes.py
+
 then create a MAC comparison with the LF
+
 https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Python_validation_code_dynamic/nastran_LFHF_MAC.py
 
 - MFEGO optimization test
