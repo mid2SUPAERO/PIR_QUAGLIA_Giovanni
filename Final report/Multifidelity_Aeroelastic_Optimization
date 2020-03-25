@@ -1,0 +1,678 @@
+\documentclass[10pt,twocolumn,a4paper]{scrartcl}
+
+\usepackage[a4paper,top=2cm,bottom=2cm,left=2.6cm,right=2.6cm,marginparwidth=1.75cm]{geometry}
+\usepackage{xpatch}
+\usepackage[french,english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{float}
+\usepackage{tabularx,ragged2e,booktabs,caption}
+\usepackage[justification=centering]{caption}
+%\captionsetup{justification=raggedright,singlelinecheck=false}
+\usepackage[runin]{abstract}
+\usepackage{lipsum}
+\usepackage{mathrsfs}
+\usepackage{titlesec}
+\usepackage{subcaption}
+\addtokomafont{disposition}{\rmfamily}
+\usepackage{mcode}
+\usepackage[toc,page]{appendix}
+\usepackage[square,numbers]{natbib}
+\newcommand\Mycite[1]{%
+  \citeauthor{#1}~(\citeyear{#1})~\citep{#1}}
+\usepackage[export]{adjustbox} 
+\usepackage{gensymb}
+\newlength{\myspace}
+\setlength{\myspace}{1em}
+\setlength{\abstitleskip}{-\parindent} % make abstract flushleft
+\setlength{\absleftindent}{0pt} % make abstract non-indented
+\setlength{\absrightindent}{0pt}
+\renewcommand{\abstractnamefont}{\normalfont\bfseries} 
+\renewcommand{\abstracttextfont}{\normalfont\bfseries} 
+\renewcommand{\thesection}{\Roman{section}} 
+\renewcommand{\thesubsection}{\arabic{subsection}}
+
+\titlespacing\section{0pt}{16pt plus 4pt minus 0pt}{4pt plus 2pt minus 6pt}
+
+\makeatletter
+\xpatchcmd{\@maketitle}{\vskip.5em}{\vskip\myspace}{}{}
+\makeatother
+
+\makeatletter
+\renewenvironment{abstract}{%
+    \if@twocolumn
+      \section*{\abstractname}%
+    \else %% <- here I've removed \small
+      \begin{center}%
+        {\bfseries \Large\abstractname\vspace{\z@}}%  %% <- here I've added \Large
+      \end{center}%
+    \fi}
+    {\if@twocolumn\else\endquotation\fi}
+\makeatother
+
+\setlength{\abstitleskip}{-\parindent} % make abstract flushleft
+\setlength{\absleftindent}{0pt} % make abstract non-indented
+\setlength{\absrightindent}{0pt}
+
+
+\title{%\usefont{OT1}{bch}{b}{n}
+\huge Multifidelity Aeroelastic Optimization}
+\subtitle{\normalfont \large Development of a low fidelity structural model in a multifidelity efficient global optimization framework. }
+\author{Giovanni QUAGLIA}
+\date{March 2020 \vspace{-6ex}}
+%\date{May 2019}
+
+\begin{document}
+
+\selectlanguage{english}
+
+\makeatletter
+\twocolumn[
+   \begin{@twocolumnfalse} 
+     \maketitle 
+    \vspace{15pt}
+     \begin{abstract}
+     \textbf{The reduction of computational time during the aircraft design process is a major issue with direct industrial applications \citep{delft}. In the last two decades a strategy named multifidelity has offered significant improvements to the already existing surrogate model-based optimization technique. The innovative approach is based on the combination of sources with different accuracy in order to accelerate the analysis. The research project is part of a joint effort between the mechanical department of university ISAE Supaero and the ONERA, The French Aerospace Lab \citep{Morlier}. The scope is the development of a more efficient framework able to design an optimized blended wing body aircraft. This paper presents the theoretical arguments related to the research and focuses on the improvements obtained during the project. In particular, the latter consist in the design and validation of a low fidelity structural model. The main topics treated are multifidelity, surrogate models, in particular Kriging and Co-Kriging interpolation, and more general optimization schemes such as Efficient Global Optimization and its enhancements.}
+ \vspace{15pt}
+     \end{abstract}
+    \end{@twocolumnfalse}
+]
+\makeatother
+
+\section{Introduction}\label{1}
+\noindent In the last century, complex mathematical models have been developed in order to simulate real systems in many areas of scientific research. The main obstacle to an intensive exploitation of such models, in the process of visualization and analysis, is the computational cost which can easily become prohibitive even for simple cases \citep{Kennedy}. This problem is more crucial in the field of aerostructural design and optimization since many simulations are required and one single Navier-Stokes CFD run can demand hours of CPU time. The challenge has been tackled by analyzing surrogate models, sometimes also referred to as meta-models, which are an approximation of the actual system based on a number of collected samples \citep{Jones2001}. These techniques have their origin in many scientific fields, from geology and statistics to engineering. Some examples are Kriging, Radial Basis Function (RBF) and Neural Network. Kriging, in particular, is an interpolation method that uses a Gaussian process as reference \citep{Forrester}. Different variants have been efficiently applied to aeroelastic optimization. Nevertheless, the actual cost of sampling would still be considerable, unless a trade-off between time and accuracy is considered. In recent years, multifidelity (MF) has been proposed as a valuable strategy to reduce computational time. Under such approach, the results employed to train and enrich the surrogate model derive from sources of different precision and are balanced in order to reduce the overall cost. These sources can be seen as black-box functions \citep{bbf} and are connected in an optimization environment.
+\\ In the last decade ONERA, The French Aerospace Lab, in a joint effort with the university ISAE-Supaero, has developed the SEGOMOE (Super Efficient Global Optimization with the Mixture Of Experts) framework \citep{Morlier}. It is a single-fidelity, surrogate-model based, Bayesian optimization tool, able to deal with high-dimensional problems with a large number of constraints. As a further progress, \Mycite{Meliani} exploited this technique as a benchmark to demonstrate the improvements offered by the use of a multifidelity approach in terms of computational time. In the research, a subsonic airfoil with 15 variables has been designed using MFEGO (MultiFidelity Efficient Global Optimization). Finally, \Mycite{colomer} produced an aeroelastic black-box function implemented in the OpenMDAO framework \cite{openmdao}, which optimizes the NASA CRM (Common Research Model) wing using a computationally cheap aerodynamic and structural solvers.
+\\The next step in this field of research aims to successfully optimize the CRM wing inside the SEGOMOE framework enhanced by the use of multifidelity. On one side, concerning the aerodynamics, the two levels of accuracy are currently represented by a CFD and a panels codes. On the other, the subject of this article is the development of a low fidelity version of the structural model. It features a reduced mesh resolution, a shorter analysis time but a substantial correlation with respect to the original high fidelity model. In particular, a \mcode{MATLAB} tool has been initially designed in order to produce a FEM mesh with a level of complexity fixed by the user. Later the model properties have been assessed through different tests.
+\\In section \ref{2} the different theoretical arguments are discussed, along with their mathematical formulation, to provide the general framework. Section \ref{7} presents the simplifications made on the original CRM model and how the low fidelity structural mesh is written. In \ref{sec:val} the static and dynamic behaviours are validated and the model is tested on a simple multifidelity optimization. Lastly, section \ref{13} reports the conclusions and lists the future objectives.
+
+\section{Theoretical framework}\label{2}
+%\noindent The following paragraphs introduce firstly the concept of aeroelastic black-box function \ref{3}, then the theory and some examples of surrogate models \ref{4}, the principle of multifidelity \ref{5} and lastly how this topics converge in an optimization process \ref{6}.
+
+\subsection{The aerostructural problem}\label{3}
+\noindent During the design phase of an aircraft the focus is the enhancement of multiple objective functions, namely the QoI (Quantities of Interest), such as drag or fuel consumption under mass and maximum stress constraints. In the case of steady cruise flight, the QoI are computed as result of a static aeroelastic problem. In literature, two approaches to solve it can be found, the monolithic and the partitioned. The latter is the most applied nowadays and it consists in the coupling of two different solvers for the structural and fluid problems, such as a FEM and a CFD software. The theory is reported with the notation used in \Mycite{delft}.
+
+\begin{equation}
+    \mathbf{y} = \mathcal{F} (\mathbf{x}), \hspace{0.5 cm} \mathbf{x} = \mathscr{S} (\mathbf{y})
+\end{equation}
+
+
+\noindent Here, $\mathbf{x}$ and $\mathbf{y}$ are the vectors containing the structural and aerodynamic variables, namely the nodes displacements and the fluid pressure along the airfoil. $\mathscr{S}$ and $\mathcal{F}$ are the structural and fluid problems. The coupling can be expressed as:
+
+\begin{equation}
+    \mathbf{x}^* = \arg \min_{\mathbf{x} \in \textrm I\!R ^{N^{s}}} \mid \mid \mathcal{R} (\mathbf{x}) \mid \mid
+\end{equation}
+
+\begin{equation}
+  with \hspace{0.5 cm} \mathcal{R}(\mathbf{x}) = \mathscr{S} \circ \mathcal{F} (\mathbf{x}) - \mathbf{x}
+\end{equation}
+
+\noindent Once the two software required by the disciplines are chosen, they are wrapped in a framework able to process the outputs in order to be provided as inputs one to the other. Given a set of design variable, the solver iterates until a predefined convergence criterion is reached, and finally the QoI and the constraints values are extracted. Hence, the ensemble can be seen as a black-box function as shown in figure \ref{fig:BBF}.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{BBF.png}
+\caption[a]{\label{fig:BBF} Black-box aeroelastic function diagram.}
+\end{figure}
+
+\subsection{Surrogate models}\label{4}
+In aeronautical engineering, relying on computationally expensive codes for the variable design space exploration is extremely time-consuming. The use of surrogate models is an attempt to circumvent this limit. Although one comprehensive definition is not possible, the main features are the dependency on some initial values of the expensive function, the ability to mimic its behaviour and being cheap to evaluate. A thorough description of the techniques available nowadays is found in \Mycite{Yondo}. One main separation is made between data fit surrogate models and ROM (Reduced Order Model) methods. In the first case, the original system is approximated by a function interpolating some known values of the QoI, and multiple choices can be made regarding the type of fitting. Some examples are Polynomial Regressions, Kriging and Radial Basis Functions. On the other side, ROM's methods are based on the projection of the governing equations onto a low-dimensional subspace. The aim is to maintain the main characteristics (physical and dynamical) neglecting, in first approximation, irrelevant features.
+\\ Since the SEGOMOE research implements data fit surrogate models, the focus here is given to the first group. In the following part it is first explained how to create a surrogate model through Kriging interpolation according to \Mycite{Jones2001}, then the Co-Kriging is introduced. 
+\subsubsection{Kriging}
+The method was invented by D.G. Krige in the field of mineral extraction and later developed by G. Matheron. Given $\mathbf{y}_i(\mathbf{x}_i)$, a set of $n$ initial design of experiments, it defines the predictor that minimizes the expected squared prediction error subjected to: being unbiased and, being a linear function of the observed $\mathbf{y}_i$’s. The process is modeled as a mean base term $\mu$ plus random variable $\mathbf{Y(x)}$ with zero mean, variance $\sigma^2$ and correlation function of two realizations approximated as:
+
+\begin{equation}\label{18}
+Corr[\mathbf{Y(x}_i),\mathbf{Y(x}_j)] = exp(-\sum_{l=1}^{d}\theta_l \mid \mathbf{x}_{il}-\mathbf{x}_{jl} \mid^{p_l})
+\end{equation}
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{param.png}
+\caption[a]{\label{fig:param}Examples of Kriging covariance function. \Mycite{bbf}.}
+\end{figure}
+
+\noindent Figure \ref{fig:param} shows two different behaviours of the correlation function, which can be seen as a definition of the distance between the two sets of variables $\mathbf{x}_i$ and $\mathbf{x}_j$. In fact when the two vectors are close, their covariance is large while it decreases if the experiments are distant. The $\theta_l$ and $p_l$ values have a key role in defining how sharply and smoothly the contribution to the correlation drops for each variable $\mathbf{x}_{l}$. If even a small difference in the variable produces a large change in the function value it is then considered active and the resulting $\theta_l$ will be greater, causing a faster lowering of the covariance. $p_l$ defines in the same manner the smoothness in the $\mathbf{x}_{l}$ direction. 
+\\The $n$ initial function evaluations can be seen as realizations of the random variable and stored in a vector:
+
+  \begin{align}\label{17}
+    \mathbf{Y} &= \begin{bmatrix}
+           Y(x_{1}) \\
+           Y(x_{2}) \\
+           \vdots \\
+           Y(x_{n})
+         \end{bmatrix}
+  \end{align}
+
+\noindent The covariance matrix is therefore defined as in \eqref{16}, where $\mathbf{R}$ is an $n \times n$ matrix with $(i,j)$ elements given by \eqref{18}.
+
+\begin{equation}\label{16}
+Cov(\mathbf{Y(x})) = \sigma^2\mathbf{R}
+\end{equation}
+
+\noindent The parameters $\mu$, $\sigma^2$, $\theta_l$ and $p_l$ are tuned using the samples and maximizing the log-likelihood function (MLE), this is usually accomplished with a Genetic Algorithm (GA) but the size of this problem can easily become demanding. As a consequence two possible choices are avoiding the update of the parameters when a new evaluation is used to train the model or fixing $p = 2$ to reduce the problem size \citep{Forrester}. Finally the Kriging predictor \eqref{14} can be recovered by adding an unknown additional sample and maximizing again the augmented likelihood function which is only dependent from $\mathbf{\hat{y}}$.
+
+\begin{equation}\label{14}
+\mathbf{\hat{y}(x)} = \hat{\mu} + \mathbf{r^{'}R}^{-1}(\mathbf{y}-1\hat{\mu})
+\end{equation}
+
+\noindent $\mathbf{r}$ and $\mathbf{R}$ contain the covariances of the samples and are functions of the parameters.
+\\This method is extremely useful because it provides a prediction of the function in a new point in the design space along with its uncertainty based on the Gaussian process used. The possible deviation is zero in the already known points and increases moving away from them as it can be seen in figure \ref{fig:kri}.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{Kriging.png}
+\caption[a]{\label{fig:kri}Example of Kriging interpolation. \Mycite{Morlier}.}
+\end{figure}
+
+\subsubsection{Co-Kriging}
+\noindent Co-Kriging \citep{Forrester}, is an extension of this method in the case when values come from two sources, the firsts $\mathbf{y}_{e}$, where the $\mathbf{e}$ stands for expensive, more precise, called HF (high fidelity), and the other less accurate $\mathbf{y}_{c}$, $\mathbf{c}$ for cheap, named LF (low fidelity). The first assumption made is that high fidelity computed values are exacted, hence in those points the error must be zero. This is reflected in property \eqref{15}, meaning that no more can be learnt from the cheap code when the value is known in $\mathbf{x}_i$.
+
+\begin{equation}\label{15}
+Cov\{\mathbf{Y_e(x}_i),\mathbf{Y_c(x}) | \mathbf{Y_c(x}_i\} = 0, \, \, \,\, \forall \mathbf{x} \ne \mathbf{x}_i
+\end{equation}
+    
+\noindent The model builds the predictor in the same fashion as before, full derivation of equations is given in \Mycite{Jones2001}. Both the expensive and cheap functions are interpolated with a Gaussian process but the first one is redefined with an auto-regressive method as the cheap model, scaled by $\rho$, plus the Gaussian process $\mathbf{D}$, which represents the difference between the two. 
+
+\begin{equation}
+\mathbf{Y}_e = \rho\mathbf{Y}_c + \mathbf{D}
+\end{equation}
+
+\noindent The procedure consists in stacking the expensive and cheap values into an unique array as before \eqref{17}. The definition of the correlation matrix becomes more dense with respect to Kriging, containing also the cross correlation between fidelity. After substituting $\mathbf{Y}_e$ with its redefinition, the parameters to be computed through MLE are twice as before ($\mu$, $\sigma^2$, $\theta_l$ and $p_l$ both for the cheap and difference processes) plus $\rho$. Since the cheap data are considered independent from the expensive ones, it is possible to maximize the log-likelihood of the covariance matrix using a GA, obtaining the expression for $\mu_c$, $\sigma_c^2$,$\theta_{cl}$ and $p_{cl}$. Finally one can write $\mathbf{d}$ and maximize also its likelihood function.
+
+\begin{equation}
+\mathbf{d} = \mathbf{y}_e - \rho\mathbf{y}_c(\mathbf{x}_e)
+\end{equation}
+
+\noindent If the values $\mathbf{y}_c(\mathbf{x}_e)$ are unknown, they can be computed using the cheap model already estimated without excessively increasing the overall cost. Finally, the predicted value for $\mathbf{\hat{y}(x)}$ can be expressed as in \eqref{14} where $\mathbf{r}$ and $\mathbf{R}$ now contain the expanded covariance. Figure
+\ref{fig:cokri} compares the two interpolation method presented, showing the improvements offered by the use of Co-Kriging and multifidelity data with respect to normal Kriging.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{co-kriging.jpg}
+\caption[a]{\label{fig:cokri}Example of Co-Kriging interpolation. \Mycite{Yondo}.}
+\end{figure}
+
+
+\noindent This meta-model is crucial in allowing the implementation of multifidelity in the optimization process, as it is shown in the next section. Literature provides many improvements to tackle problems such as: noisy data \citep{Forrester}, parameters tuning time and ill conditioned functions \citep{bbf}, offering a variety of meta models to be used in optimization environments \citep{MF} \citep{RBF}. Finally, \Mycite{Kennedy} propose a more general Bayesian derivation, valid for an increased number of fidelity, of which Co-Kriging is just a reduction.
+
+\subsection{Multifidelity}\label{5}
+The concept of multifidelity has already been introduced in the previous sections. When it is not possible to have more than few high-fidelity samples, the use of a cheaper solver allows to explore the variable design space. The large number of LF simulations permits to enrich the surrogate model and to address the optimum search. Moreover, the space of possible sources is huge. Samples used to train the model could come from experiments, software of different levels of modelling, such as CFD or panels codes in aerodynamics, a coarse and a fine mesh on the same problem or even a change in the convergence criteria for an iterative algorithm \citep{delft}. Multifidelity is efficient if the accuracy of the optimum found is maintained while saving computational time performing less HF simulations. The main property required is the correlation between the results. The LF model must evolve in accordance with the HF one to correctly predict the behaviour of the objective function. Furthermore, the cheap code should be one or more orders of magnitude faster, allowing consistent scaling and time saving.
+\\ The theoretical background regarding MF methods is still ambiguous. While the results in terms of computational time are generally positive, it has been proven that the use of LF data can worsen the surrogate precision \citep{Guo}. \Mycite{Fernandez} delve into over 100 papers which make use of a MF approach. The research compared the studies in terms of levels of fidelity, disciplines, types of solvers, and data of correlation and time savings when made available. The conclusion is the absence of a clear pattern, able to determine whether or not it is convenient an MF implementation, and the lack of research in this direction. 
+
+\subsection{Surrogate-based optimization}\label{6}
+%In this section different choices in the design of experiments (DoEs) are first introduced \ref{20}, then the standard approach to surrogate-based optimization and its MF implementation \ref{21} \ref{22}, finally an overview of the SEGOMOE framework is shortly presented \ref{23}.
+
+\subsubsection{Design of Experiments techniques}\label{20}
+The optimization process requires an initial meta-model in order to begin the minimum research. The computation of the first samples is called DoEs (Design of Experiments) and the theory dates back to the beginning of the 20th century when it was developed to plan and conduct physical experiments. The difficulties of noise and bias are no longer present in modern numerical simulations and the objective of the research has shifted to maximize the amount of information regarding the design space minimizing the number of samples. DoEs techniques can be grouped in Classical (CDoE) or Modern (MDoE) \citep{Yondo}. Two issues common to both groups are the choice of the number of samples and whether to perform the analysis offline or online. In the first case the experimental campaign is predefined while in the second case the additional sample is determined by the previous. In this sense a trade-off between accuracy and computational cost is always needed.
+\\CDoE designs were studied first. They assume a general non-repeatability of measurements and search for space-filling by mean of a uniform distribution of the training points. In spite of being more appropriate for physical experiments, they are here cited since MF techniques can in principle include such data. Some examples are grid designs, central composite designs and box-behnken designs. 
+\\MDoE were developed in parallel to the evolution of computer science and are characterized by deterministic samples excluding any source of inaccuracy due to randomness. These techniques generally place more points in the interior of the design space, with the aim of producing the surrogate model minimizing the bias error. As a result this class is considered less space filling with respect to CDoE but is usually less time-consuming and provides a better knowledge of the design space. A wide broad of methods exists, and they all share the attempt to perform a better exploration. A first classification includes Random designs such as: Monte Carlo methods, Projection-based designs, Statistical Measure-based designs and Miscellaneus designs. Latin Hypercubes (LHS) belongs to the last group and it is the most common choice in aerospace engineering. The model is the multidimension generalization of the Latin Square, a grid having only one sample on each row and column. Thus in an $k$ variables space, each of them divided in $N$ intervals, the Latin Hypercube Design (LHD) is a $(N \times k)$ matrix in which each column is a permutation of $\{1,2,...,N\}$. A 2D example is shown in figure \ref{fig:LHS}, with $k = 2$ and $N = 20$. The SEGOMOE framework implements one of the many variants to this technique, the Enhanced Stochastic Evolutionary (ESE) algorithm, which chooses the points optimizing a distance criterion.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.35\textwidth]{LH.png}
+\caption[a]{\label{fig:LHS}Example of Latin Hypercube Sampling. \Mycite{Forrester}.}
+\end{figure}
+
+\subsubsection{Efficient Global Optimization (EGO)}\label{21}
+\noindent Once obtained the initial surrogate model, it can be optimized in place of the original numerical system. The algorithm flowchart is well described in figure \ref{fig:OP}: the surface is updated each time a new sample is computed until a convergence criterion is met. 
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.55\textwidth]{optProcess.png}
+\caption[a]{\label{fig:OP} Optimization Algorithm Flowchart. \Mycite{Morlier}.}
+\end{figure}
+
+\noindent This kind of process is characterized by the choice made on the next sample. A simple criterion could be investigating the lowest point of the interpolation, but obviously it will lead only to a more accurate estimate of the local minimum. Thus the approach would put too much emphasis on the exploitation of the predictor neglecting the exploration of the remaining design space. In order to balance the two aspects, the most common solution to this issue is adopting the Maximum Expected-Improvement (EI) criterion. This method takes in consideration the already found minimum and the uncertainty in all the interpolation surface, providing a trade-off between local and global search. 
+
+\begin{equation}\label{24}
+E[I(\mathbf{x})] = E[max(f_{min},0)]
+\end{equation}
+
+\noindent The Expected-Improvement \eqref{24} is a function that can be defined for statistical processes such as Kriging and Co-Kriging, and the optimizing problem shifts to find its maximum. The most common choices are derivative-free optmizers and a useful property is that in some cases \citep{bbf} the EI has been proven monotone with respect to $\mathbf{y}$ and $\sigma$. Moreover, the advantages of an EI approach are two-fold: firstly, it avoids the definition of a target function as improvement, secondly, it provides an automatic stopping criterion based on a fixed lower threshold of its value. The algorithm under such formulation is usually referred in literature as Efficient Global Optimization (EGO). Figure \ref{fig:EI} presents one step of the algorithm. As indicated, one local minimum is found in $x = 3$. Nevertheless, the high uncertainty in the region $x = [6-11]$, as visualized in the probability function, results in a peak in the EI at $x = 8$. In conclusion, this kind of algorithm has been proven to converge to a global maximum but with one possible disadvantage of taking a significant number of iterations to start searching globally when the initial interpolation is highly deceptive \citep{Jones2001}.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.55\textwidth]{sbopt2.png}
+\caption[a]{\label{fig:EI}Expected-Improvement Optimization. \Mycite{bbf}}
+\end{figure}
+
+\subsubsection{Multifidelity EGO (MFEGO)}\label{22}
+
+When multifidelity is applied to Efficient Global Optimization, the method is then called MFEGO and many examples can be found in literature. Both in \Mycite{Meliani} and \Mycite{RBF}, the algorithm was successfully tested on the optimization of an airfoil shape subjected to multiple constraints.
+\\ The augmented framework requires two aeroelastic black-box functions, depicted before in section \ref{3}. Both must be able to compute the same quantities of interest but one, the LF, should be significantly faster to execute than the HF at the cost of a reduction in accuracy. Not only the two functions should have high correlation in their behaviour, it is also mandatory that the design variables have a correct representation in the models. For instance the LF, even if it is a simplified version of the more detailed original, it should preserve all the parameters that are optimized in the algorithm.
+\\ The addition of multiple fidelity impose two more criteria. Firstly, during the DoEs, a choice is made on whether a point is computed through HF or LF. The issue is strongly problem dependent, \Mycite{Forrester} suggests a rule of thumbs, setting the number of cheap and expensive points at $n_c > 10k$ and $n_e < 10k$, $k$ being the design variable vector dimension. On large problems, one common procedure is computing a dense LF surrogate adding few HF data in the points where the uncertainty is maximum, until a certain threshold.
+Secondly, the most interesting improvement regards the choice of $t$, the next fidelity level during the optimization loop. The standard strategy deals with this problem in a separate step, after selecting the next
+enrichment point $x^*$.
+
+\begin{equation}\label{27}
+    t = \arg \max_{k \in (0,...,l)} \frac{\sigma^2_{red}(k,x^*)}{cost_{total}(k)^2}
+\end{equation}
+
+\noindent Being:
+
+\begin{equation}
+    \sigma^2_{red}(k,x^*) = \sum_{i = 0}^{k} \sigma^2_{d,i}(x^*)\prod_{j = 1}^{l-1}\rho_j^2
+\end{equation}
+\begin{equation}
+    cost_{total}(k) = \sum_{i = 0}^k c_i
+\end{equation}
+
+\noindent It is reported here the criterion \eqref{27} adopted in \Mycite{Meliani}. The formula is written for a system with a number of $l$ fidelity and based on the ratio between $\sigma^2_{red}(k,x^*)$ , the reduced variance in the next query point, and the square of the total computational cost of the solvers. One difficulty is the correct prediction of the cost value and scaling it to a unit of measurements comparable to the variance. Finally, one more feature in an MFEGO algorithm is employing only HF $f_{min}$ in the EI criterion.
+
+\subsubsection{The SEGOMOE Framework}\label{23}
+Super Efficient Global Optimization with Mixture Of Experts (SEGOMOE) is the name of the research currently developed in a joint effort between ONERA, The French Aerospace Lab and the mechanical department at university ISAE-Supaero \citep{Morlier}. The single fidelity algorithm that has been developed differs from the theory already presented in two aspects. The first straightforward improvement is the substitution of the EI criterion by the WB2 \eqref{28}.
+
+\begin{equation}\label{28}
+    \textrm{WB}2(\mathbf{x}) = -\hat{y}(\mathbf{x}) + EI(\mathbf{x})
+\end{equation}
+
+\noindent The WB2 function is more local and smoother than the EI, so that it is easier to optimize and accelerates the convergence of the algorithm even to a local solution. This is very important for high dimensional problems with great uncertainties. 
+\\ The application of the MOE technique is on the other side the key enhancement to the method. A surrogate model may be the overall best choice for one problem, but at the same time it could provide a bad fitting in some regions of the design space. The MOE algorithm clusters the DoEs depending on the function behaviour in each area and applies the best suited model for such group. The available options include Least Square Model (LS), Polynomial Regression Models (PA2 or PA3), Ordinary Kriging, RBF, Multifidelity Kriging (MFK) and Kriging Partial Least Square (KPLS). The last one is an approximation of Kriging in which the computation of the hyper-parameters is speed up by the use of Partial Least Square, thus projecting the unknowns on a smaller subspace in which more weight is given to the most active variables.
+\\ Finally, a global model is obtained from the clusters through a Gaussian Mixture Model (GMM) tuned with Expectation-Maximization. Two algorithms have been developed to choose the number and type of clusters but also to evaluate the posterior probability of each of them, which is then used in the GMM. The resulting model can both be smooth or a discontinuous approximation, depending on the formula introduced for the last quantity.
+
+\section{Design and analysis of a low fidelity structural model}\label{7}
+%\noindent This section illustrates the improvements realized in the Multifidelity Aeroelastic Surrogate-based Optimization field of studies. Paragraph \ref{8} introduces the current research objectives and the framework installed at the mechanical department in the university ISAE-Supaero. It is followed by a description of the model of aircraft wing used as test configuration \ref{9}. The procedure for its simplification is depicted in \ref{10} while the validation process is explained in \ref{29}.
+
+\subsection{General framework}\label{8}
+The focus in the current research is optimizing the NASA CRM wing in the SEGO framework enhanced by the use of multifidelity. First of all, the programming language of the SEGO optimization algorithm is python and, in this sense, the adoption of the OpenMDAO library results extremely useful. OpenMDAO is an open-source computing platform for multidisciplinary analysis and optimization. Its structure makes it well suited for wrapping the two disciplines solvers, creating an aeroelastic black-box function. In general OpenMDAO codes are written connecting components, which can be explicit or implicit, each of them representing a part of the problem. Every component has inputs and outputs which must all be connected in the main function. Once run, the solver iterates until also the implicit parts reach convergence. 
+\\ One key part of this next step in the research is the OpenMDAO package \textit{aerostructures} \citep{colomer}. The framework is used for solving static and dynamic aeroelastic analysis and optimizations. The XDSM diagram \ref{fig:OpenMDAO} presents its functioning. Each block represents a component, one can find the two main disciplines which run at their interior Panair \cite{panair}, an open-source aerodynamic panels code and Nastran95 \cite{nastran95}, used for solving the structural problem. All the other boxes have linking scopes being the interpolation and the transfer of loads and displacements between the fluid and structural mesh.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.50\textwidth]{OpenMdao.png}
+\caption[a]{\label{fig:OpenMDAO}XDSM diagram of the static aeroelastic OpenMDAO LF solver. \Mycite{colomer}.}
+\end{figure}
+
+\noindent Taking advantage of this package, setting up the new optimization framework has been straightforward. The SEGO environment can easily encapsulate \textit{aerostructures} and creates two versions of the main function. The first type is directly the same as before, while in the other case Panair has been substituted by a component calling the execution of the CFD software ADFlow. In this way two levels of fidelity are available.
+\\ While this first version is currently being tested, one more step was needed to improve the multifidelity approach. In fact, both functions had as an input the original CRM FEM model, which is given with a high resolution mesh, weakening the possible advantages of MF. Finally, the scope of this work has been twofold. Firstly, the accuracy of the structural model has been reduced to allow faster simulations, secondly, the preserved correlation with the initial system has been analyzed. Figure \ref{fig:MFSEGO} illustrates how the framework should resemble once this tasks have been achieved.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.45\textwidth]{mfsego.png}
+\caption[a]{\label{fig:MFSEGO}Diagram representing the current research framework.}
+\end{figure}
+
+\subsection{The NASA CRM model}\label{9}
+The Common Research Model is an attempt made by NASA to provide an experimental database for the validation of application of Computational Fluid Dynamics \cite{crm}. The related website is a repository of results from numerical and experimental analysis. In particular, some versions of different FEM models for the aircraft wing are released in Nastran language, one is drawn in figure \ref{fig:crm}. The one considered here has the following characteristics. The material is an aluminum alloy with $\rho = 2795.67$ and E = 68.9 GPa. The model consists of over 10500 nodes connected in 26600 elements. The structure is modelled as wing boxes delimited by 58 ribs closed by the upper and lower skins and with two spars at the leading and trailing edge. All this parts are explicitly represented by CQUAD4 elements depending on 12 PSHELL cards of different thickness. Moreover, ribs and skins are reinforced by stringers created with the CBAR class and with 6 different sections and principals of inertia. Some figures showing in details the various component are reported in appendices \ref{appendix:A}.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.45\textwidth]{nasacrm.png}
+\caption[a]{\label{fig:crm}Illustration of the NASA CRM wing FEM model. \Mycite{crm}.}
+\end{figure}
+
+\subsection{Design phase}\label{10}
+\noindent The first task of the project consisted in coding a routine able to receive as input the nastran \textit{.bdf} file related to the original model and producing as outputs the reduced list of nodes and the new mesh description. As an additional objective it was planned to parametrise the code in order to allow choosing the desired complexity of the model. The environment used for coding the tool has been \mcode{MATLAB}. An early difficulty has been faced when dealing with the NASA input file. The list containing the nodes was given with no apparent order in the IDs so that it was impossible to find a mathematical law able to define their succession. As a consequence the problem as been split in writing two separate functions to order the nodes and to write the new mesh. 
+\\ \mcode{MainCreatePlanes.m} is the first routine. One initial assumption has been made neglecting the intermediate nodes between two ribs with the outcome of having the elements representing skins and spars as long as each section. The removal of the additional rows of nodes in the cord direction diminishes the overall model flexibility with respect to the rotation around the body axis. As a result of such hypothesis the function operates with the following procedure. First, it reads a sub-list of the stringers elements inside the ribs and takes the two extreme points defining the first one. After that, it searches for a third node as the closest among the remaining and computes the 4 geometrical parameters of a plane passing through them. Finally, the node list is scanned, selecting and removing the entries whose distance from the plane is less than a fixed tolerance. The picked nodes are saved in a structure referring to a particular rib, and the process is iterated on the reduced file. As a final step, the 58 sections are sorted root to tip and the nodes belonging to each of them are locally enumerated. The result is presented in figure \ref{fig:sortedplanes} where the initial chaotic cloud of points has been ordered.
+
+\begin{figure}[htp]
+%\centering
+\includegraphics[width=0.55\textwidth,center]{planes.eps}
+\caption[a]{\label{fig:sortedplanes}Matlab representation of the ordered nodes colored by rib section.}
+\end{figure}
+
+\noindent The second routine \mcode{MainCreateMesh.m} loads the structure containing the sorted nodes and writes a new coarser model. At the beginning of the function two main parameters, L and V, are defined, as they set the number of points in the reduced mesh on the vertical and cord directions. One first sub-routine creates the list with the new nodes of the model. In order to accomplish this goal for each section the coordinates are transformed in a temporary reference frame so that the first two axes are in the rib plane and the third one is orthogonal to them. Then a spline interpolation is created  for each row of nodes in the section, and it is evaluated in the number of points requested by L and V. The 57th rib has less nodes than the others and it is joint with the last one. Since the precise location of the intersection cannot be respected considering a coarser mesh, the function shifts all the points in the rib in order to place it as close as possible to the original.
+\\ Once created, the list with the new set of nodes is taken as database by a second sub-routine which has the scope of redefining all the elements as in the starting model. The last hypothesis regards the definition of the spars. In the original CRM model they are modelled explicitly by CQUAD4 elements in a I-beam. In the spirit of reducing the complexity of the system, the flanges were substituted with simple CROD elements as they are loaded only axially in first approximation. All the elements preserve the original properties, and in particular the V vectors are reassigned to the CBAR entries looking for the closest and identically oriented stringer.
+\\One realization of the LF structural model is presented in figure \ref{fig:LFmodel} for the choices of L = 4 and V = 3.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{exLFmodel.png}
+\caption[a]{\label{fig:LFmodel} Low Fidelity structural model visualized in Patran for the choices of \, L = 4 and V = 3.}
+\end{figure}
+
+\noindent The last task during the design phase consisted in adapting the python \textit{aerostructures} package to receive the same model with different mesh definitions. In fact the structure created by the \mcode{MATLAB} tool would have a decreased stiffness, due to the lower number of stringers, if the geometrical and inertial properties are kept as in the HF model. The problem was overcome providing to the main function the parameters L and V, the summation on all the stringer areas and principals of inertia as well as the size of the spar flanges. A new component is then added to the OpenMDAO group and it reassigns the properties according to the actual number of bars.
+
+\section{Model validation}\label{sec:val}
+\subsection{Static analysis}
+\noindent In a preliminary phase of the validation process, all the simulations performed were static aeroelastic problems representing the aircraft in cruise condition. After computing the converged solution in the OpenMDAO framework, Gmsh has been used to visualize the deformation of the wing subject to the aerodynamic loads along with the Von Mises stress distribution. As an example, figure \ref{fig:gmsh} compares the solution of the original model with the one obtained with the L = 4 low fidelity structure. The standard geometrical values for wing surface, wing span and sweep angle were taken from the original NASA model \cite{crm}, while the case parameters are reported in table \ref{tab:cruise}. The QoI selected to be compared in the analysis have been the lift coefficient (Cl) and the induced drag (CDi) computed by Panair, and the tip vertical displacement ($\delta_{tip}$) and the maximum Von Mises stress ($\textrm{VM}_{max}$) that come from the postprocessing of the Nastran95 output file.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{hflf.png}
+\caption[a]{\label{fig:gmsh} Gmsh visualizations of the converged solutions of the CRM wing for the HF case (up) and the L = 4 LF case (down).}
+\end{figure}
+
+
+\begin{table}[htp]
+\centering
+\caption{Aircraft cruise parameters}
+\begin{tabular}{lr}{\label{tab:cruise}}
+\textbf{Name} & \textbf{Value}\\
+\toprule
+Flight speed & 252.16168 [m/s] \\
+Mach number & 0.85\\
+Air density  & 0.380580 [kg/m^3] \\
+Wing incidence angle  & 1.34 [$\degree$] \\
+\end{tabular}
+\end{table}
+
+\subsubsection{Mesh resolution influence}\label{11}
+As a first step, the influence of the mesh resolution has been studied. The \mcode{MATLAB} tool designed was used to produce different FEM models for the parameter L varying in the interval [4-28]. The lower bound allows to have at least 2 stringers running along the wing span, while the upper bound reaches the same value of nodes in the cord direction as for the original model. 
+\\The computational cost is the major interest of MF, to this purpose, two timers, measuring the setup and run times of the OpenMDAO routine, were added to the main function . Figure \ref{fig:timer} shows the results normalized by the values obtained running the full model. The run time includes all the executions of Nastran95, hence it presents the greatest reduction. As expected, the line grows with a power trend due to the increasing number of elements for each node added. The key outcome is the ratio between the reference and the fastest simulation time \eqref{31}, computed with L = 4.  This is the maximum gain obtained and it can be called Fidelity Cost Ratio (FCR) and employed as an indicator, for example in the criterion for the next point fidelity.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{times.eps}
+\caption[a]{\label{fig:timer} Setup and execution normalized timers as a function of the L parameter.}
+\end{figure}
+
+\begin{equation}\label{31}
+FCR = \frac{T_{run}^{L4}}{T_{run}^{HF}} = 16.9\%  
+\end{equation}
+
+\noindent Figure \ref{fig:ClL} shows the computed values of Cl depending on the L parameter along with the reference produced by the original model. The graphs for all the QoI are reported in appendices \ref{appendix:B}. The LF results have a general convergent trend, as the structure representation becomes more and more refined with the mesh, proving the coherent design of the model. The offset between the final values at L = 28 and the HF solution is the trade-off of a MF approach. It is caused by the simplifications assumed during the design phase, namely the removal of the rib intermediate nodes, the redefinition of spars and the shifting of the next to last rib.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{clnodes.eps}
+\caption[a]{\label{fig:ClL} Lift coefficient as a function of the L parameter with reference HF value.}
+\end{figure}
+
+\subsubsection{Multifidelity correlation analysis}\label{12}
+Once the \mcode{MATLAB} tool has been validated and the FCR computed, it was possible to focus on the correlation analysis between the LF model with L = 4 and the HF original one. It is hopeful that the LF maintains the same offset found in the previous section even for other design variables inputs. For this reason maximum and minimum relative variances must be always checked during the design space exploration. Moreover, the most important indicator is the correlation between the two fidelity, since it states if the LF can provide true information on the HF behaviour. This property has been tested in two cases, one with a random approach and one with predefined parameter steps. Appendices \ref{appendix:C} contains all the modified design variables and results.\\
+\noindent In a first experiment the influence of a physical property of the structure has been analyzed. The vector containing the thickness of the 12 different PSHELL cards has been randomly modified changing its components independently inside the $\pm$40\% range. 10 different realizations of the properties have been considered, the 10th being the original one. The two fidelity have been tested on each configuration. The first outcome has been the representation of the four QoI values as a function of the scalar product between the modified and original thickness vectors normalized by themselves. This index is equal to 1 when the parameters are unchanged and it decreases expressing an overall distance in the variable design space. Figure \ref{fig:tipT} presents the two fidelity results for $\delta_{tip}$ and as well as the other graphs, it shows a perfect accordance in the results.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{tip1var.eps}
+\caption[a]{\label{fig:tipT} Tip vertical displacement as a function of the normalized projection of the shell elements thickness vectors onto the standard CRM property.}
+\end{figure}
+
+\noindent Moreover, the computation of the actual Pearson's correlation coefficient (PCC) between the HF and LF QoI validates the trend. Table \ref{tab:corr1} reports its values along with the relative percent variances with respect to the HF results.
+
+\begin{table}[htp]
+\caption{Comparative indices between HF and LF for different QoI, panels thickness case. \vspace{0.3cm}}
+\centering
+\begin{tabular}{lp{1cm}p{1cm}p{1cm}p{1cm}}{\label{tab:corr1}}
+\textbf{Indices:}&\textbf{Cl} & \textbf{CDi} & \textbf{$\delta_{tip}$} & \textbf{$\textrm{VM}_{max}$}\\
+\toprule
+\addlinespace[0.2cm]
+PCC & 0.9995 & 0.9987 & 0.9903 & 0.9849 \\
+\addlinespace[0.2cm]
+$\Delta_{max}$ & 1.365\% & 1.693\% & 0.704\% & 3.477\% \\
+\addlinespace[0.2cm]
+$\Delta_{min}$ & 1.126\% & 0.790\% & 0.404\% & 0.219\% \\
+\end{tabular}
+\end{table}
+
+\noindent The second experiment has focused on the effect of two geometrical properties, the wing span (b) and the sweep angle ($\varphi$). Their standard values were b = 58.7629 [m] and $\varphi$ = 37.16$\degree$, they were updated two times in both direction by a $\Delta b$ = 5 [m] and $\Delta\varphi$ = 2.5$\degree$ step, resulting in 25 configuration cases. The main function was modified by the use of the \textit{aerostructures} components able to deform the mesh according to a variation in those parameters. Figure \ref{fig:cases} shows three realizations of the wing in the software Gmsh, the original and the two extreme cases.
+
+\begin{figure}[htp]
+%\centering
+\includegraphics[width=0.5\textwidth]{case.png}
+\caption[a]{\label{fig:cases} Gmsh visualization of the standard wing and of the two extreme configurations tested.}
+\end{figure}
+
+\noindent In this second test the QoI has been represented on the Z axis of a 3D graph with the design variables on the XY plane. Figure \ref{fig:3d} shows the surfaces for the $\textrm{VM}_{max}$ quantity. Once more the LF is able to correctly predict the behaviour of the HF. All the figures present a partial crossing of the surfaces for high values of the b parameter. Such long-span configuration could present some nonlinearity badly predicted by the aeroelastic function and should be object of further analysis. Finally the comparative indices, obtained from the matrices containing the QoI values, are reported in table \ref{tab:corr2}.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.55\textwidth]{vm2var.eps}
+\caption[a]{\label{fig:3d} Maximum Von Mises stress as a function of the wing span and the sweep angle.}
+\end{figure}
+
+\begin{table}[htp]
+\caption{Comparative indices between HF and LF for different QoI, 2 variables case. \vspace{0.3cm}}
+\centering
+\begin{tabular}{lp{1cm}p{1cm}p{1cm}p{1cm}}{\label{tab:corr2}}
+\textbf{Indices:}&\textbf{Cl} & \textbf{CDi} & \textbf{$\delta_{tip}$} & \textbf{$\textrm{VM}_{max}$}\\
+\toprule
+\addlinespace[0.2cm]
+PCC & 0.9998 & 0.9982 & 0.9997 & 0.9945 \\
+\addlinespace[0.2cm]
+$\Delta_{max}$ & 1.694\% & 1.547\% & 0.884\% & 2.841\% \\
+\addlinespace[0.2cm]
+$\Delta_{min}$ & 0.354\% & 0.119\% & 0.015\% & 0.118\% \\
+\end{tabular}
+\end{table}
+
+\subsection{Dynamic analysis}
+\noindent The second phase of the validation has concerned the dynamic behaviour of the LF model. The objective has been the assessment of the correlation between the frequency response of the simplified structure and the original one. Nastran95 provides a solution for normal mode extraction even if it does not offer the same advanced options as in commercial releases. For example the standard Lanczos method is not available and thus a basic inverse algorithm has been chosen for all the simulations. One common performance indicator for a dynamic comparison is the Modal Assurance Criterion (MAC) \citep{Pastor}. The Modal Assurance Criterion is a statistical indicator
+that is most sensitive to large differences and relatively insensitive to small differences in the mode shapes. When comparing two sets of eigenvectors in the same space, MAC indices are usually stacked in a matrix where a maximum value of 1 states full correlation, 0 being no correlation. Thus, the MAC matrix is calculated as the normalized scalar products of the two sets of
+vectors $\Phi_{HF}$ and $\Phi_{LF}$ as in \eqref{eq:mac}.
+
+\begin{equation}
+    MAC(i,j) = \frac{\left\lVert \Phi_{HF}_i^T \Phi_{LF}_j\right\rVert^2}{(\Phi_{HF}_i^T\Phi_{HF}_i)(\Phi_{LF}_j^T\Phi_{LF}_j)}
+    \label{eq:mac}
+\end{equation}
+
+\noindent Mode shapes must belong to the same space, therefore the HF ones are projected, through an interpolation, onto the LF subspace. Moreover, a good practice during the comparison is to apply a mode tracking algorithm able to find the most correlated modes regardless of their extraction order. Finally, this correlation criterion takes into account only eigenvectors while frequencies must be separately compared on a relative error basis.\\
+The first result presented in table \ref{tab:fcrdyn} is the FCR between a 10 modes extraction for the two fidelity.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{HF extraction} & \textbf{LF extraction} &  \textbf{FCR}
+        \\
+        \hline
+        840.53 s & 21.44 s &  2.55 \% \\
+         \hline
+    \end{tabular}
+    \caption{Computational cost of modal analysis.}
+    \label{tab:fcrdyn}
+\end{table}
+
+\noindent The LF model gives a sharp decrease in the computational time while the FCR value can be use as a cost index in the multifidelity optimization.\\
+Following the static validation, the fidelity correlation has been tested on the $b$ and $\varphi$ design variables with the same original values and variations. Since mode shapes might shift in order from one model to the other, the code extracts 10 eigenvectors from the HF and 30 from the LF, using mode tracking to find the best matches. From each analysis it is possible to compute the MAC matrix and a table of relative errors on the first 10 modes. Figure \ref{fig:mac0} and table \ref{tab:freq} show the results for the CRM original values of the variables while more cases are reported in \ref{appendix:D}. Models are proven to have great dynamic correlation, in particular no mode tracking is needed since LF frequencies are ordered and the relative error is almost zero for the first three modes.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.55\textwidth]{Macbs0.eps}
+\caption[a]{\label{fig:mac0} MAC matrix for the original values of $b$ and $\varphi$.}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{HF}  & \textbf{LF}  &  \textbf{Relative error} \\
+        \hline
+1.9320 &   1.9398    &  -0.400 \\
+\hline
+5.7476 &     5.7409 & 0.117 \\
+\hline
+7.9694  &    7.9275  &0.525 \\
+\hline
+11.650   &  11.402   &2.126\\
+\hline
+17.672   &   16.227  &8.172\\
+\hline
+19.002    & 18.413   &3.102\\
+\hline
+22.289   & 22.067    & 0.992\\
+\hline
+26.817  &    26.038  &2.906\\
+\hline
+31.016  &   28.620   &7.725\\
+\hline
+35.742  &   34.826  & 2.561\\
+
+         \hline
+    \end{tabular}
+    \caption{Frequencies [Hz] and relative error.}
+    \label{tab:freq}
+\end{table}
+
+\subsection{Multifidelity test case application}
+The final part of the validation process has consisted in a simple unconstrained optimization using the MFEGO algorithm. Both the static and dynamic HF behaviours are well represented by the LF model but the latter has been chosen as analysis type. The objective function to be minimize is the inverse of the distance between the first two frequencies, $b$ and $\varphi$ being taken as design variables in accordance with the tests made. Thus the problem is defined as in \eqref{eq:prob}.
+
+\begin{equation}
+\label{eq:prob}
+\begin{aligned}
+\min_{b,\varphi} \quad & \frac{1}{f_2-f_1}\\
+\textrm{for} \quad & b \in [40 m,70 m]\\
+  & \varphi \in [0^\circ, 30^\circ]   \\
+\end{aligned}
+\end{equation}
+
+\noindent The MFEGO algorithm requires two black box functions, namely the LF and HF codes for normal modes extraction, the number of points used to initially train the Co-Kriging surrogate, 7 for each fidelity, and a cost evaluation. Based on the previous section the last vector is set to [0.01,1] and a budget of 15 is chosen. Each call of a function evaluation counts for a cost against the budget.\\
+Figure \ref{fig:init} shows the initial LHS sampling of the design space. The same number of LF and HF points is chosen to train the first surrogate model.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{Figure_1.png}
+\caption[a]{\label{fig:init} Initial LHS sampling in the design space.}
+\end{figure}
+
+\noindent Once the initial meta-model is obtained, the EGO algorithm successfully balances the exploration and exploitation of the design space choosing for each enrichment point the level of fidelity to be used. The final landscape is presented in figure \ref{fig:final} along with the location of the last point considered as optimum. Table \ref{tab:res} summarises the analysis results.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.5\textwidth]{Figure_1-1.png}
+\caption[a]{\label{fig:final} Design space after the optimization.}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        LF calls & 127 \\
+        \hline
+        HF call & 21 \\
+         \hline
+        Total iterations & 134 \\
+         \hline
+        $b$ solution & 41.53 m \\
+        \hline
+        $\varphi$ solution & $20.69^\circ$ \\
+        \hline
+        objective function & 3.393786858646402e-05
+ \\
+        \hline
+    \end{tabular}
+    \caption{MFEGO test results.}
+    \label{tab:res}
+\end{table}
+
+\noindent The simple test performed verifies the possibility to use the new LF in a multifidelity environment. The imposed cost ratio leads the algorithm to exploit three regions using many calls of the cheap code while the HF points are fewer and better spread. Nevertheless, the number of calls to the HF model is still consistent and a further reduction of the computational cost ratio would be an interesting development.
+
+\section{Conclusions}\label{13}
+\noindent The objective of the research project has been in large part achieved. The \mcode{MATLAB} tool designed is able to produce a low fidelity version of the original CRM model. Increasing the mesh resolution by use of the L and V parameters does not lead to a closer representation of the high fidelity. Nevertheless it allows to verify the tool accuracy and the scaling of the computational cost. One first possible improvement is the exploration of even more simplified LF structures obtained, for example, considering less ribs than the standard number. \\
+\noindent Moving on to the validation phase, the first static and dynamic results have been great in terms of precision and correlation with respect to the HF model. More variable configurations could be simulated to increase the confidence in the correlated behaviour. \\
+The test case has shown the interest in even more extremely simplified fidelity levels. During the last months, various attempts have been made in order to define the procedure for the reduction to a beam stick model of the CRM wing. Among the methods tested, both applying unitary loads to each wing box for stiffness matrix extraction, as in \citep{cirillo},\citep{iacono}, and the analytical computation through wing structure theory, have failed. The resultant beam models are too stiff or flexible. Thus a it is still not possible to introduce a third level of fidelity.\\
+\noindent Finally, the next step in this research would be implementing the low fidelity structural models in the optimization framework. As a first try it is still possible to adopt Panair as the aerodynamic software for both functions to create an initial fast comparison. Later the reduced model can be inserted in the MF SEGO analysis, as depicted in diagram \ref{fig:MFSEGO}, in order to study the real trade-off between the reduction in the computational cost and the lost in accuracy. These tests will produce important data regarding the actual benefits of the MF approach and how far the simplification of the LF model could be pushed.
+
+%\twocolumn{
+\bibliographystyle{apalike}
+\bibliography{ref}
+%}
+
+
+\onecolumn
+
+\begin{appendices}
+
+\section{}\label{appendix:A}
+Pictures taken in Patran of the NASA CRM wing model components.
+
+
+\begin{figure}[htp]
+  \centering
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width= 1 \textwidth]{skin.png}
+    \caption{\centering Detail of the ribs and skin of the NASA CRM wing FEM model.}
+  \end{subfigure}%
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{long.png}
+    \caption{\centering Detail of the spars of the NASA CRM wing FEM model.}
+  \end{subfigure}
+    \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{Stri.png}
+    \caption{\centering Detail of the stringers of the NASA CRM wing FEM model.}
+  \end{subfigure}
+  %\caption{ Error Euler's angles.\label{fig:pointmodes}}
+\end{figure}
+
+\section{}\label{appendix:B}
+
+Additional figures relative to the L parameter influence analysis.
+
+\begin{figure}[htp]
+  \centering
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width= 1 \textwidth]{vmnnodes.eps}
+    \caption{Maximum Von Mises stress coefficient as a function of the L parameter with reference HF value.}
+  \end{subfigure}%
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{tipnodes.eps}
+    \caption{Tip displacement as a function of the L parameter with reference HF value.}
+  \end{subfigure}
+    \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{distance.eps}
+    \caption{Distance of the location of the maximum Von Mises stress with respect to the HF solution, as a function of the L parameter.}
+  \end{subfigure}
+  
+  %\caption{ Error Euler's angles.\label{fig:pointmodes}}
+\end{figure}
+\newpage
+\section{}\label{appendix:C}
+
+Additional figures relative to the panels thickness influence study.
+
+\begin{figure}[htp]
+  \centering
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width= 1 \textwidth]{Cl1var.eps}
+    \caption{Lift coefficient as a function of the normalized projection of the shell elements thickness vectors onto the standard CRM property.}
+  \end{subfigure}%
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{cd1var.eps}
+    \caption{Induced drag coefficient as a function of the normalized projection of the shell elements thickness vectors onto the standard CRM property.}
+  \end{subfigure}
+    \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{vm1var.eps}
+    \caption{Maximum Von Mises stress as a function of the normalized projection of the shell elements thickness vectors onto the standard CRM property.}
+  \end{subfigure}
+ \end{figure}
+
+Additional figures relative to the wing span - sweep angle influence study.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width= 1 \textwidth]{Cl2var.eps}
+    \caption{Lift coefficient as a function of the wing span and the sweep angle.}
+  \end{subfigure}%
+  \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{Cd2var.eps}
+    \caption{Induced drag coefficient as a function of the wing span and the sweep angle.}
+  \end{subfigure}
+    \begin{subfigure}[b]{0.5\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{tip2var.eps}
+    \caption{Tip displacement as a function of the wing span and the sweep angle.}
+  \end{subfigure}
+ \end{figure}
+ \newpage
+ \section{}\label{appendix:D}
+ MAC matrices for different values of the design variables.
+ 
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.49\linewidth}
+    \centering\includegraphics[width= 1 \textwidth]{Macb5s0.eps}
+    \caption{$\Delta b = 5$ m and $\Delta \varphi = 0^\circ$}
+  \end{subfigure}%
+  \begin{subfigure}[t]{0.49\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{Macb_5s0.eps}
+    \caption{$\Delta b = -5 $m and $\Delta \varphi = 0^\circ$}
+  \end{subfigure}
+    \begin{subfigure}[t]{0.49\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{Macb0s25.eps}
+    \caption{$\Delta b = 0 $m and $\Delta \varphi = 2.5^\circ$}
+  \end{subfigure}
+      \begin{subfigure}[t]{0.49\linewidth}
+    \centering\includegraphics[width = 1 \textwidth]{Macb0s_25.eps}
+    \caption{$\Delta b = 0 $m and $\Delta \varphi = -2.5^\circ$}
+  \end{subfigure}
+ \end{figure}
+
+
+ 
+\end{appendices}
+\end{document}
