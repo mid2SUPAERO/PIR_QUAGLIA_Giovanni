@@ -14,3 +14,14 @@ Tutorials:
 - Design of the LF model: https://htmlpreview.github.io/?https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Tutorials/MainCreateMesh.html
 
 - Static aeroelastic simulation: https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Python_validation_codes/nastran_panair_complete.ipynb
+
+- Modal comparison
+first run the HF extraction https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Python_validation_code_dynamic/nastran_HF_modes.py
+then create a MAC comparison with the LF
+https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Python_validation_code_dynamic/nastran_LFHF_MAC.py
+
+- MFEGO optimization test
+https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/Optimization_Test/Test2FModal.py
+
+- Stick model creation
+https://github.com/mid2SUPAERO/PIR_QUAGLIA_Giovanni/blob/master/StickModel/nastran_2LF_modes.py
